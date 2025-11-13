@@ -24,6 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Build Docker image
+        run: docker build -t flask-basic .
+
 #      - name: Run server in background
 #        run: |
 #          python server.py &
@@ -31,9 +34,6 @@ jobs:
 
       - name: Run client tests
         run: python client.py
-
-      - name: Build Docker image
-        run: docker build -t flask-basic .
 
       - name: Run container test
         run: |
