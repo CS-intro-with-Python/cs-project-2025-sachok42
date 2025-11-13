@@ -26,7 +26,7 @@ jobs:
 
       - name: Run server in background
         run: |
-          python -d server.py &
+          python server.py &
           sleep 2
 
       - name: Build Docker image

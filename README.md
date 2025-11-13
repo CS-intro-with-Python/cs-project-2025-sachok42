@@ -7,12 +7,7 @@ My project is a website that visualizes diagrams you described with text. Main f
 
 ## Setup
 
-The dockerfile that installs all the required tech and launches the server is built and runned on pull with a github action, so there shouldn't be anything you should set up preliminary
-In case it doesn't work for some reason, you can run build and run the dockerfile by yourselves
-```
-
-
-```
+The dockerfile that installs all the required tech and launches the server is built and runned on pull with a github action, so there shouldn't be anything you should have set up preliminary
 
 ## Requirements
 
