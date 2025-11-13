@@ -26,7 +26,7 @@ jobs:
 
       - name: Run server in background
         run: |
-          nohup python app.py &
+          nohup python server.py &
           sleep 3
 
       - name: Run client tests
