@@ -1,38 +1,41 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/DESIFpxz)
-# CS_2024_project
+# CS_2026.5_project
 
 ## Description
 
-Describe the project in 2-3 sentences (You can use more). 
+My project is a website that visualizes diagrams you described with text. Main feature: eurler circles visualizer
 
 ## Setup
 
-Describe the steps to set up the environment and run the application. This can be a bash script or docker commands.
-
+The dockerfile that installs all the required tech and launches the server is built and runned on pull with a github action, so there shouldn't be anything you should set up preliminary
+In case it doesn't work for some reason, you can run build and run the dockerfile by yourselves
 ```
-Your commands
+
 
 ```
 
 ## Requirements
 
-Describe technologies, libraries, languages you are using (this can be updated in the future).
+Python 3.11
+Flask
+Requests (preinstalled with python)
+Docker
 
 ## Features
 
 Describe the main features the application performs.
 
-* Feature 1
-* Feature 2
+* Automatical generation of diagrams (in progress)
+* Home page (empty so far)
 
 ## Git
 
-Specify which branch will store the latest stable version of the application
+Latest working version will be stored in the "main" branch
 
 ## Success Criteria
 
 Describe the criteria by which the success of the project can be determined
 (this will be updated in the future)
 
-* Criteria 1
-
+* You can enter the home page via 0.0.0.0/home and it gives 200 code response
+* In progress
