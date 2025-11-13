@@ -27,6 +27,12 @@ jobs:
       - name: Build Docker image
         run: docker build -t flask-basic .
 
+      - name: Run container test
+        run: |
+          docker run -d -p 5001:5001 --name flask-basic flask-basic
+          sleep 3
+          curl -f http://localhost:5001/home
+
 #      - name: Run server in background
 #        run: |
 #          python server.py &
@@ -34,9 +40,3 @@ jobs:
 
       - name: Run client tests
         run: python client.py
-
-      - name: Run container test
-        run: |
-          docker run -d -p 5001:5001 --name flask-basic flask-basic
-          sleep 3
-          curl -f http://localhost:5001/home
