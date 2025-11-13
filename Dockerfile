@@ -5,4 +5,4 @@ COPY . /app
 
 LABEL authors="sachok_42"
 RUN pip install -r requirements.txt
-CMD ["flask", "--app", "server.py", "run", "-h", "0.0.0.0", "-p", "5001"]
+CMD ["flask", "--app", "-d", "server.py", "run", "-h", "0.0.0.0", "-p", "5001"]
