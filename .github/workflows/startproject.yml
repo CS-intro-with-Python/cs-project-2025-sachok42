@@ -35,7 +35,7 @@ jobs:
       - name: Run container test
         run: |
           docker run -d -p 5001:5001 --name flask-basic flask-basic
-          sleep 3
+          sleep 10
           curl -f http://localhost:5001/home
 
       - name: Run client tests
