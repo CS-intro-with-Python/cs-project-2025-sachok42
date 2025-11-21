@@ -24,19 +24,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run server in background
-        run: |
-          python server.py &
-          sleep 2
+#      - name: Run server in background
+#        run: |
+#          python server.py &
+#          sleep 2
 
       - name: Build Docker image
         run: docker build -t flask-basic .
 
-#      - name: Run container test
-#        run: |
-#          docker run -d -p 5001:5001 --name flask-basic flask-basic
-#          sleep 3
-#          curl -f http://localhost:5001/home
+      - name: Run container test
+        run: |
+          docker run -d -p 5001:5001 --name flask-basic flask-basic
+          sleep 3
+          curl -f http://localhost:5001/home
 
       - name: Run client tests
         run: python client.py
