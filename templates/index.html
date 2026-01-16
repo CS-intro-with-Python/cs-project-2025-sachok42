@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10-Set Euler Visualizer</title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/benfred/venn.js@master/venn.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 350px; background: white; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; z-index: 10; flex-shrink: 0; }
+        .input-card { background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+        input, textarea { width: 95%; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; display: block; }
+        textarea { height: 35px; resize: none; font-size: 11px; }
+        button { width: 100%; padding: 12px; margin-top: 10px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
+        .btn-update { background: var(--primary); color: white; }
+        .btn-download { background: #10b981; color: white; }
+        .canvas-area { flex-grow: 1; position: relative; background: white; overflow: hidden; }
+        #venn { width: 100%; height: 100%; min-width: 500px; min-height: 500px; }
+        .venntooltip { position: absolute; padding: 8px; background: rgba(0,0,0,0.8); color: white; border-radius: 4px; opacity: 0; pointer-events: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h3>Sets (Max 10)</h3>
+    <div id="input-container"></div>
+    <button class="btn-update" onclick="updateDiagram()">Update Diagram</button>
+    <button class="btn-download" onclick="downloadSVG()">Download SVG</button>
+</div>
+
+<div class="canvas-area">
+    <div id="venn"></div>
+    <div class="venntooltip"></div>
+</div>
+
+<script>
+    // 1. Setup Inputs
+    const container = document.getElementById('input-container');
+    for (let i = 1; i <= 10; i++) {
+        container.innerHTML += `
+            <div class="input-card">
+                <input type="text" id="name-${i}" value="Set ${i}">
+                <textarea id="data-${i}" placeholder="e.g. element1, element2..."></textarea>
+            </div>`;
+    }
+
+    const zoom = d3.zoom().on("zoom", () => {
+        d3.select("#venn svg g").attr("transform", d3.event.transform);
+    });
+
+    function updateDiagram() {
+        const setsMap = {};
+        const setNames = [];
+
+        for (let i = 1; i <= 10; i++) {
+            const name = document.getElementById(`name-${i}`).value.trim();
+            const elements = document.getElementById(`data-${i}`).value.split(',').map(s => s.trim()).filter(s => s);
+            if (elements.length > 0) {
+                setsMap[name] = elements.slice(0, 15);
+                setNames.push(name);
+            }
+        }
+
+        const div = d3.select("#venn");
+        div.selectAll("*").remove(); // Clears any existing diagram
+
+        if (setNames.length === 0) return;
+
+        const vennData = [];
+        const combinations = (arr) => arr.reduce((acc, v) => acc.concat(acc.map(r => [v, ...r])), [[]]).filter(r => r.length);
+        const combos = combinations(setNames);
+
+        combos.forEach(combo => {
+            let intersection = setsMap[combo[0]];
+            for(let i=1; i<combo.length; i++) {
+                intersection = intersection.filter(x => setsMap[combo[i]].includes(x));
+            }
+
+            if (intersection.length > 0) {
+                // Determine items that belong ONLY to this intersection
+                let exclusive = intersection.filter(item => {
+                    return setNames.filter(sn => setsMap[sn].includes(item)).length === combo.length;
+                });
+
+                vennData.push({ sets: combo, size: intersection.length, items: exclusive.join(", ") });
+            }
+        });
+
+        // Ensure we have a valid width/height
+        const rect = div.node().getBoundingClientRect();
+        const width = rect.width || 800;
+        const height = rect.height || 600;
+
+        const chart = venn.VennDiagram().width(width).height(height);
+        const svg = div.append("svg").attr("width", "100%").attr("height", "100%").call(zoom);
+        const g = svg.append("g");
+
+        // Render the diagram
+        g.datum(vennData).call(chart);
+
+        // --- ENHANCED LABELING ---
+        g.selectAll(".venn-area").each(function(d) {
+            const area = d3.select(this);
+            const label = area.select("text");
+
+            // If the region has exclusive items, draw them
+            if (d.items && d.items.length > 0) {
+                let x, y;
+                if (!label.empty()) {
+                    x = label.attr("x");
+                    y = parseFloat(label.attr("y")) + 14;
+                } else {
+                    const bbox = area.select("path").node().getBBox();
+                    x = bbox.x + bbox.width / 2;
+                    y = bbox.y + bbox.height / 2;
+                }
+
+                area.append("text")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "item-label")
+                    .style("fill", "#444")
+                    .style("font-size", "9px")
+                    .style("pointer-events", "none")
+                    .text(d.items);
+            }
+        });
+
+        // Tooltip logic
+        const tooltip = d3.select(".venntooltip");
+        g.selectAll("g")
+            .on("mouseover", function(d) {
+                tooltip.transition().duration(200).style("opacity", .9);
+                tooltip.html(`<strong>${d.sets.join(" & ")}</strong><br>${d.size} items`);
+                d3.select(this).select("path").style("fill-opacity", .4);
+            })
+            .on("mousemove", function() {
+                tooltip.style("left", (d3.event.pageX + 10) + "px").style("top", (d3.event.pageY - 20) + "px");
+            })
+            .on("mouseout", function() {
+                tooltip.transition().duration(200).style("opacity", 0);
+                d3.select(this).select("path").style("fill-opacity", .25);
+            });
+    }
+
+    function downloadSVG() {
+        const svg = document.querySelector("#venn svg");
+        if (!svg) return;
+        const serializer = new XMLSerializer();
+        const source = '<?xml version="1.0" standalone="no"?>\r\n' + serializer.serializeToString(svg);
+        const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "euler_diagram.svg";
+        link.click();
+    }
+
+    // Initialize on load
+    window.onload = () => {
+        setTimeout(updateDiagram, 100); // Small delay to ensure layout is ready
+    };
+    window.onresize = updateDiagram;
+</script>
+</body>
+</html>
