@@ -9,7 +9,6 @@ A full-stack web application for creating, visualizing, and managing Euler diagr
 - **Save & Load**: Store your diagrams in the cloud and access them anytime
 - **Export**: Download diagrams as SVG files
 - **Responsive Design**: Works on desktop and mobile devices
-- **Real-time Visualization**: See your diagram update as you type
 - **Smart Labeling**: Automatically displays elements in intersection regions
 
 ## Installation
@@ -79,16 +78,8 @@ http://localhost:5000
 - **Visualization**: D3.js, Venn.js
 - **Authentication**: Werkzeug password hashing
 
-## Security Notes
-
-⚠️ **Important**: This application uses a development secret key. For production use:
-
-1. Change the `app.secret_key` in `app.py` to a secure random string
-2. Use HTTPS
-3. Consider using a more robust database (PostgreSQL, MySQL)
-4. Add rate limiting and CSRF protection
-
 ## Database Schema
+
 
 ### Users Table
 - `id`: Primary key
@@ -127,8 +118,8 @@ app.run(debug=True, port=5001)
 
 ## License
 
-MIT License - feel free to use and modify as needed.
+NUP License - feel free to use and modify as needed, but no idea why you'd want.
 
 ## Contributing
 
-Contributions welcome! Feel free to submit issues and pull requests.
+No contributions, it's perfect!
