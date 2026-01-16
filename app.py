@@ -1,11 +1,18 @@
+import uuid
+
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3, json
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import random
+import logging
 app = Flask(__name__)
-app.secret_key = "dev-secret-key"
+app.secret_key = ".".join([str(random.randint(0, 9)) for _ in range(1000)])
 DB = "database.db"
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 def get_db():
     return sqlite3.connect(DB)
@@ -34,7 +41,9 @@ def init_db():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    app.logger.info("Registration page")
     if request.method == "POST":
+        app.logger.info("Registering user")
         with get_db() as db:
             try:
                 db.execute(
@@ -50,6 +59,7 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    app.logger.info("Logging in")
     if request.method == "POST":
         user = get_db().execute(
             "SELECT id, password_hash FROM users WHERE username=?",
@@ -58,6 +68,7 @@ def login():
 
         if user and check_password_hash(user[1], request.form["password"]):
             session["user_id"] = user[0]
+            logging.info("Logged in")
             return redirect("/")
         return "Invalid credentials", 401
 
@@ -66,6 +77,7 @@ def login():
 
 @app.route("/logout")
 def logout():
+    app.logger.info("Logging out")
     session.clear()
     return redirect("/login")
 
@@ -74,11 +86,13 @@ def logout():
 def index():
     if "user_id" not in session:
         return redirect("/login")
+    app.logger.info("Index page")
     return render_template("index.html")
 
 
 @app.route("/save_diagram", methods=["POST"])
 def save_diagram():
+    app.logger.info("Saving diagram")
     if "user_id" not in session:
         return jsonify({"error": "Not authenticated"}), 401
 
@@ -99,6 +113,7 @@ def save_diagram():
 
 @app.route("/load_thumbnails")
 def load_thumbnails():
+    app.logger.info("Loading thumbnails")
     if "user_id" not in session:
         return jsonify({"error": "Not authenticated"}), 401
 
@@ -131,6 +146,7 @@ def load_diagram(diagram_id):
 
 @app.route("/delete_diagram/<int:diagram_id>", methods=["DELETE"])
 def delete_diagram(diagram_id):
+    app.logger.info("Deleting diagram")
     if "user_id" not in session:
         return jsonify({"error": "Not authenticated"}), 401
 
