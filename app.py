@@ -36,12 +36,15 @@ def init_db():
 def register():
     if request.method == "POST":
         with get_db() as db:
-            db.execute(
-                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                (request.form["username"],
-                 generate_password_hash(request.form["password"]))
-            )
-        return redirect("/login")
+            try:
+                db.execute(
+                    "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                    (request.form["username"],
+                     generate_password_hash(request.form["password"]))
+                )
+                return redirect("/login")
+            except sqlite3.IntegrityError:
+                return "Username already exists", 400
     return render_template("register.html")
 
 
@@ -56,7 +59,7 @@ def login():
         if user and check_password_hash(user[1], request.form["password"]):
             session["user_id"] = user[0]
             return redirect("/")
-        return "Invalid credentials"
+        return "Invalid credentials", 401
 
     return render_template("login.html")
 
@@ -71,11 +74,14 @@ def logout():
 def index():
     if "user_id" not in session:
         return redirect("/login")
-    return render_template("index.html", max_sets=6)
+    return render_template("index.html")
 
 
 @app.route("/save_diagram", methods=["POST"])
 def save_diagram():
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
     data = request.json
     with get_db() as db:
         db.execute(
@@ -85,7 +91,7 @@ def save_diagram():
                 session["user_id"],
                 data["name"],
                 json.dumps(data["diagram"]),
-                data["thumbnail"]
+                data.get("thumbnail", "")
             )
         )
     return jsonify({"status": "ok"})
@@ -93,27 +99,49 @@ def save_diagram():
 
 @app.route("/load_thumbnails")
 def load_thumbnails():
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
     rows = get_db().execute(
-        "SELECT id, name, thumbnail FROM diagrams WHERE user_id=? ORDER BY created_at DESC",
+        "SELECT id, name, thumbnail, created_at FROM diagrams WHERE user_id=? ORDER BY created_at DESC",
         (session["user_id"],)
     ).fetchall()
 
     return jsonify([
-        {"id": r[0], "name": r[1], "thumbnail": r[2]}
+        {"id": r[0], "name": r[1], "thumbnail": r[2], "created_at": r[3]}
         for r in rows
     ])
 
 
 @app.route("/load_diagram/<int:diagram_id>")
 def load_diagram(diagram_id):
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
     row = get_db().execute(
         "SELECT diagram_data FROM diagrams WHERE id=? AND user_id=?",
         (diagram_id, session["user_id"])
     ).fetchone()
 
+    if not row:
+        return jsonify({"error": "Diagram not found"}), 404
+
     return jsonify(json.loads(row[0]))
+
+
+@app.route("/delete_diagram/<int:diagram_id>", methods=["DELETE"])
+def delete_diagram(diagram_id):
+    if "user_id" not in session:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    with get_db() as db:
+        db.execute(
+            "DELETE FROM diagrams WHERE id=? AND user_id=?",
+            (diagram_id, session["user_id"])
+        )
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    app.run(debug=True, port=5001, host="0.0.0.0")
